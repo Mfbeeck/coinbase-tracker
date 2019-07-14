@@ -229,7 +229,7 @@ wks1.update_cells(totals_cell_list)
 
 
 # open currency details worksheet from file
-wks2 = gc.open("Coinbase Tracking").get_worksheet(1)
+wks2 = gc.open("Coinbase Portfolio").get_worksheet(1)
 
 # ADD CURRENCY OVERVIEW DETAILS INTO SPREADSHEET
 currency_count = len(my_coinbase['currencies'])
@@ -287,7 +287,7 @@ for currency in my_coinbase['currencies']:
 all_orders = sorted(all_orders, key = lambda k:k['datetime'])
 
 # open orders worksheet from file
-wks3 = gc.open("Coinbase Tracking").get_worksheet(2)
+wks3 = gc.open("Coinbase Portfolio").get_worksheet(2)
 
 order_count = len(all_orders)
 order_cell_list = wks3.range('B3:K' + str(2 + order_count))
