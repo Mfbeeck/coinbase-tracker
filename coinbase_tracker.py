@@ -1,12 +1,13 @@
 from coinbase.wallet.client import Client
 key = 'YOUR_COINBASE_API_KEY'
 scrt = 'YOUR_COINBASE_API_SECRET'
+
+print("1. Connecting to Coinbase...")
 client = Client(key, scrt)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Connect to coinbase and pull down all account info
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 list_of_accounts = client.get_accounts()['data']
 
 my_coinbase = {'current_value': 0,
@@ -14,10 +15,12 @@ my_coinbase = {'current_value': 0,
                'current_performance': 0,
                'currencies': []}
 
+print("2. Gathering Coinbase account information...")
 # Iterate over each account that isn't a USD account
 for account in list_of_accounts:
     try:
-        if (account['currency'] == 'USD') | (float(account['balance']['amount']) == 0):
+        if (account['currency'] == 'USD')\
+        | (float(account['balance']['amount']) == 0):
             pass
         else:
             # Get current amount of currency and your totals
@@ -109,7 +112,9 @@ for account in list_of_accounts:
                     currency_dict['orders'].append(order_dict)
 
             # sort all orders by date
-            currency_dict['orders'] = sorted(currency_dict['orders'], key = lambda k:k['datetime'], reverse=False)
+            currency_dict['orders'] = sorted(currency_dict['orders'],
+                                             key = lambda k:k['datetime'],
+                                             reverse=False)
 
             # Store running quantity of currency
             total_currency_quantity = 0
@@ -121,9 +126,9 @@ for account in list_of_accounts:
 
             for order in currency_dict['orders']:
                 if order['type'] == 'buy':
-                    # calculate current quantity and weighted avg price of the currency you own
-                    num = (total_currency_quantity * weighted_currency_price) + (order['amount'] *
-                                                                                 order['spot_price'])
+                    # calculate current quantity and weighted avg price of each
+                    num = ((total_currency_quantity * weighted_currency_price)
+                           + (order['amount'] * order['spot_price']))
                     den = (total_currency_quantity + order['amount'])
                     weighted_currency_price = float(num/den)
                     total_currency_quantity += order['amount']
@@ -132,13 +137,17 @@ for account in list_of_accounts:
 
                 elif order['type'] == 'sell':
                     # calculate realized gain/loss on sale
-                    # investment value is how much the amount you sold is worth at average buy price
-                    investment_value = (-order['amount'])*weighted_currency_price
+                    # use average buy price to calculate sale return
+                    investment_value = ((-order['amount'])
+                                        *weighted_currency_price)
 
-                    # save original worth of the sale quantity - i.e. amount * avg buy price up until now
-                    order['original_worth'] = -(order['amount']*weighted_currency_price)
+                    # save original worth of the sale quantity
+                    # i.e. amount * avg buy price up until now
+                    order['original_worth'] = (-(order['amount']
+                                                 *weighted_currency_price))
                     currency_dict['sell_original_worth'] += order['original_worth']
-                    currency_dict['realized_gain_loss'] += (order['sell_total'])-(investment_value)
+                    currency_dict['realized_gain_loss'] += ((order['sell_total'])
+                                                            - (investment_value))
 
                     # subtract quantity sold from existing amount
                     total_currency_quantity += order['amount']
@@ -150,12 +159,16 @@ for account in list_of_accounts:
                 else:
                     pass
             currency_dict['average_price'] = weighted_currency_price
-            currency_dict['original_worth'] = currency_dict['quantity']*weighted_currency_price
-            currency_dict['unrealized_gain_loss'] = currency_dict['current_total'] - currency_dict['original_worth']
-            currency_dict['current_performance'] = currency_dict['unrealized_gain_loss']/currency_dict['original_worth']
+            currency_dict['original_worth'] = (currency_dict['quantity']
+                                               *weighted_currency_price)
+            currency_dict['unrealized_gain_loss'] = (currency_dict['current_total']
+                                                     - currency_dict['original_worth'])
+            currency_dict['current_performance'] = (currency_dict['unrealized_gain_loss']
+                                                    /currency_dict['original_worth'])
             # Calculate realized gain performance if something has been sold
             if currency_dict['realized_gain_loss'] != 0:
-                currency_dict['realized_gain_performance'] = currency_dict['realized_gain_loss']/currency_dict['sell_original_worth']
+                currency_dict['realized_gain_performance'] = (currency_dict['realized_gain_loss']
+                                                              /currency_dict['sell_original_worth'])
 
             # Add in currency totals to full account dictionary
             my_coinbase['current_value'] += currency_dict['current_total']
@@ -164,26 +177,35 @@ for account in list_of_accounts:
     except:
         pass
 
-my_coinbase['current_performance'] = my_coinbase['current_unrealized_gain']/(my_coinbase['current_value']-my_coinbase['current_unrealized_gain'])
-my_coinbase['currencies'] = sorted(my_coinbase['currencies'], key = lambda k:float(k['current_total']), reverse=True)
-
+my_coinbase['current_performance'] = (my_coinbase['current_unrealized_gain']
+                                      /(my_coinbase['current_value']
+                                        -my_coinbase['current_unrealized_gain'])
+                                     )
+my_coinbase['currencies'] = sorted(my_coinbase['currencies'],
+                                   key = lambda k:float(k['current_total']),
+                                   reverse=True)
+print("Coinbase information gathered.\n")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Connect to google spreadsheets and fill info
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+print("3. Connecting to Google Sheets...")
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
 scope = ['https://spreadsheets.google.com/feeds',
          'https://www.googleapis.com/auth/drive']
 
-credentials = ServiceAccountCredentials.from_json_keyfile_name("YOUR_GOOGLE_CREDENTIALS_FILENAME.json", scope)
+credentials = (ServiceAccountCredentials
+               .from_json_keyfile_name("YOUR_GOOGLE_CREDENTIALS_FILENAME.json",
+                                       scope)
+              )
 
 gc = gspread.authorize(credentials)
+spreadsheet = gc.open("Coinbase Portfolio")
 
 # open portfolio overview worksheet from file
-wks1 = gc.open("Coinbase Portfolio").get_worksheet(0)
+wks1 = spreadsheet.get_worksheet(0)
 
 # ADD PORTFOLIO OVERVIEW DETAILS INTO SPREADSHEET
 currency_count = len(my_coinbase['currencies'])
@@ -212,6 +234,7 @@ for idx, currency in enumerate(my_coinbase['currencies']):
     currency_cell_list[cell].value = currency['current_performance']
     cell += 1
 
+print("4. Writing information to sheet 1...")
 # Update spreadsheet with currency overview
 wks1.update_cells(currency_cell_list)
 
@@ -229,7 +252,7 @@ wks1.update_cells(totals_cell_list)
 
 
 # open currency details worksheet from file
-wks2 = gc.open("Coinbase Portfolio").get_worksheet(1)
+wks2 = spreadsheet.get_worksheet(1)
 
 # ADD CURRENCY OVERVIEW DETAILS INTO SPREADSHEET
 currency_count = len(my_coinbase['currencies'])
@@ -274,6 +297,7 @@ for idx, currency in enumerate(my_coinbase['currencies']):
     # Historical Investment
     currency_cell_list[cell].value = currency['all_time_invested']
 
+print("5. Writing information to sheet 2...")
 # Update spreadsheet with currency overview
 wks2.update_cells(currency_cell_list)
 
@@ -287,7 +311,7 @@ for currency in my_coinbase['currencies']:
 all_orders = sorted(all_orders, key = lambda k:k['datetime'])
 
 # open orders worksheet from file
-wks3 = gc.open("Coinbase Portfolio").get_worksheet(2)
+wks3 = spreadsheet.get_worksheet(2)
 
 order_count = len(all_orders)
 order_cell_list = wks3.range('B3:K' + str(2 + order_count))
@@ -333,7 +357,13 @@ for idx, order in enumerate(all_orders):
         order_cell_list[cell].value = order['original_worth']
         cell += 1
         # Net Profit
-        order_cell_list[cell].value = order['earned'] - order['original_worth']
+        order_cell_list[cell].value = (order['earned']
+                                       - order['original_worth'])
 
+print("6. Writing information to sheet 3...")
 # Update spreadsheet with orders
 wks3.update_cells(order_cell_list)
+
+spreadsheet_url = "https://docs.google.com/spreadsheets/d/%s" % spreadsheet.id
+
+print("Process completed.\n\nTo see results please visit:", spreadsheet_url)
