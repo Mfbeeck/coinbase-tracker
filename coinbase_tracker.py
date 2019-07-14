@@ -178,12 +178,12 @@ from oauth2client.service_account import ServiceAccountCredentials
 scope = ['https://spreadsheets.google.com/feeds',
          'https://www.googleapis.com/auth/drive']
 
-credentials = ServiceAccountCredentials.from_json_keyfile_name('YOUR_GOOGLE_CREDENTIALS_FILENAME.json', scope)
+credentials = ServiceAccountCredentials.from_json_keyfile_name("YOUR_GOOGLE_CREDENTIALS_FILENAME.json", scope)
 
 gc = gspread.authorize(credentials)
 
 # open portfolio overview worksheet from file
-wks1 = gc.open("Coinbase Tracking").get_worksheet(0)
+wks1 = gc.open("Coinbase Portfolio").get_worksheet(0)
 
 # ADD PORTFOLIO OVERVIEW DETAILS INTO SPREADSHEET
 currency_count = len(my_coinbase['currencies'])
