@@ -6,21 +6,21 @@ from oauth2client.service_account import ServiceAccountCredentials
 # CREDENTIALS
 key = 'YOUR_COINBASE_API_KEY'
 scrt = 'YOUR_COINBASE_API_SECRET'
-google_creds = "YOUR_GOOGLE_CREDENTIALS_FILENAME.json"
+google_creds_filename = "YOUR_GOOGLE_CREDENTIALS_FILENAME.json"
 
 # ALL FUNCTIONS
 def create_coinbase_client(key,scrt):
     print("1. Connecting to Coinbase...")
     try:
         client = Client(key, scrt)
-        client.get_accounts()
+        client.get_accounts(limit=100)
         return client
     except:
         raise Exception("Failed to connect to client. Please make sure key"\
                         " and secret are correct.")
 
 def pull_cb_account_info(client):
-    list_of_accounts = client.get_accounts()['data']
+    list_of_accounts = client.get_accounts(limit=100)['data']
 
     my_coinbase = {'current_value': 0,
                    'current_unrealized_gain': 0,
@@ -389,6 +389,7 @@ my_coinbase = pull_cb_account_info(client)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Connect to google spreadsheets and fill info
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#if you changed your copy of the sheet's name from "Coinbase Portfolio" -- edit here
 spreadsheet = connect_to_google_ss(google_creds_filename,"Coinbase Portfolio")
 # Filling out first sheet, portfolio overview
 generate_portfolio_overview(my_coinbase, spreadsheet)
