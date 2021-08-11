@@ -6,7 +6,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 # CREDENTIALS
 key = 'YOUR_COINBASE_API_KEY'
 scrt = 'YOUR_COINBASE_API_SECRET'
-google_creds = "YOUR_GOOGLE_CREDENTIALS_FILENAME.json"
+google_creds_filename = "YOUR_GOOGLE_CREDENTIALS_FILENAME.json"
 
 # ALL FUNCTIONS
 def create_coinbase_client(key,scrt):
